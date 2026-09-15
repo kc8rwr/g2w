@@ -1,0 +1,9 @@
+root = true
+
+[*.php]
+indent_style = tab
+indent_size = 3
+
+[*.phtml]
+indent_style = tab
+indent_size = 3

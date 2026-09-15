@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<? //robot_headers(Config::$seo->robotsPolicy, '    ', 2) ?>
+		<title><?= $content->getTitle(Config::$aesthetics->siteTitle) ?></title>
+		<?php if (!empty($content->getDescription)){ ?>
+			<meta name="description" content="<?= $content->getDescription() ?>" />
+		<?php } ?>
+		<link rel="stylesheet" type="text/css" href="<?=Config::$paths->baseDir?>/g2w/g2w.css" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   </head>
+   <body>
+      <div class="content">
+			<?php $content->stream(); ?>
+      </div>
+			<!-- Prism.js - syntax highlighting for code samples -->
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+   </body>
+</html>
+
