@@ -38,16 +38,14 @@
 				$renum = false;
 				$this->path = trim($input);
 				$files = scandir($this->path);
-				$key = array_search('.', $files);
-				if (false !== $key){
-					unset($files[$key]);
-					$renum = true;
-				}
-				if ('' == Config::$paths->relativeUri) {
-					$key = array_search('..', $files);
-					if (false !== $key){
-						unset($files[$key]);
-						$renum = true;
+				for ($i = count($files) - 1; $i > -1; $i--){
+					$file = $files[$i];
+					if (str_starts_with($file, '.')){
+						if (0 !== strcasecmp($file, '.gophermap')
+							&& ('..' != $file || '' == Config::$paths->relativeUri )){
+								unset($files[$i]);
+								$renum = true;
+						}
 					}
 				}
 				if ($renum){
@@ -164,7 +162,7 @@
 			}
 			$this->currentHtmlLine = $line;
 		}
-		
+
 		private function fileNameToHtml(string $file): string {
 			$output = '';
 			$lc_file = strtolower($file);
@@ -225,6 +223,7 @@
 			case 'gemini':
 				$label = 'Gemtext page';
 				$ext = 'gmi';
+				$file .= '.' . Config::$behaviors->htmlExt;
 				break;
 			case 'html':
 			case 'htm':
