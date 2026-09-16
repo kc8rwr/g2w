@@ -932,10 +932,10 @@
 			if (empty($icon)){
 				$output .= "<span class=\"icon-placeholder\">[{$ext}]</span>";
 			} else {
-				$output .= "<img src=\"{$icon}\" class=\"icon-img\" alt=\"\" aria-hidden=\"true\" />";
+				$output .= "<img src=\"{$icon}\" class=\"icon-img\" alt=\"{$label}\" aria-hidden=\"true\" />";
 			}
 			$output .= "</div>";
-			$output .= "<span class=\"file-name\">{$label}<br/>{$file}</span>";
+			$output .= "<span class=\"file-name\">{$file}</span>";
 			$output .= "</a></li>\n";
 			
 			$output .= "</li>\n";
