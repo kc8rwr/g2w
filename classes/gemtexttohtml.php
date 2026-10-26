@@ -394,7 +394,7 @@
 				}
 				
 				try{
-					foreach ($content as $line){
+					foreach ($content ?? [] as $line){
 						$line = str_replace("\r", ' ', $line);
 						$line = trim($line, " \n");
 						$last = '';
@@ -417,12 +417,12 @@
 				}
 				
 				$content = null;
-				$title = htmlspecialchars($title);
+				$title = htmlspecialchars($title ?? '');
 				if (!empty($title)){
 					$this->title = $title;
 				}
 			}
-			return empty($this->title) ? $fallback : $this->title;
+			return empty($this->title) ? ($fallback ?? '') : $this->title;
 		}
 
 		/**
@@ -432,10 +432,11 @@
 		 * skipping headings and preformatted blocks, and truncates it to a maximum
 		 * number of characters.
 		 *
-		 * @param int $maxChars The maximum number of characters for the description.
+		 * @param string|null $fallback Returned if no description is found.
 		 * @return string The extracted (and HTML-escaped) description.
 		 */
-		function getDescription($maxChars=160, $fallback=null) : string {
+		function getDescription($fallback=null) : string {
+			$maxChars = Config::$seo->maxDescriptionChars;
 			if (null == $this->description){
 				$description = '';
 				$accept_level = -1;
@@ -458,7 +459,7 @@
 				}
 
 				try{
-					foreach ($content as $line){
+					foreach ($content ?? [] as $line){
 						$line = str_replace("\r", ' ', $line);
 						$line = trim($line, " \n");
 						$last = '';
@@ -502,11 +503,11 @@
 					}
 				} catch (Exception){
 				}
-				$description = htmlspecialchars($description);
+				$description = htmlspecialchars(trim($description));
 				$this->description = $description;
 			}
 			
-			return empty($description) ? $fallback : $this->description;
+			return empty($this->description) ? ($fallback ?? '') : $this->description;
 		}
 
 		/**

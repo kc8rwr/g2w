@@ -68,18 +68,18 @@
 			$this->description = $description;
 		}
 
-		public function getTitle(string $fallback = null) : string {
+		public function getTitle(?string $fallback = null) : string {
 			if (is_null($this->title)){
 				$this->title = "Directory Listing " . Config::$paths->relativeUri;
 			}
-			return empty($this->title) ? $fallback : $this->title;
+			return empty($this->title) ? ($fallback ?? '') : $this->title;
 		}
 
 		public function getDescription($fallback = null) : string {
 			if (is_null($this->description)){
 				$this->description = "Directory Listing " . Config::$paths->relativeUri;
 			}
-			return empty($this->description) ? $fallback : $this->title;
+			return empty($this->description) ? ($fallback ?? '') : $this->description;
 		}
 
 		public function stream() : void {

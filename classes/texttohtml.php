@@ -36,8 +36,8 @@
 			string $input,
 			bool $is_path = false,
 			int $indentLevel = 2,
-			string $title = null,
-			string $description = null,
+			?string $title = null,
+			?string $description = null,
 		) {
 			if ($is_path){
 				if (empty($input)){
@@ -224,7 +224,7 @@
 				}
 				$this->title = $title;
 			}
-			return empty($this->title ? $fallback : $this->title);
+			return empty($this->title) ? ($fallback ?? '') : $this->title;
 		}
 
 		/**
@@ -233,7 +233,7 @@
 		 * It attempts to find suitable descriptive text from the beginning of the file,
 		 * skipping empty lines, and truncates it to a maximum number of characters.
 		 *
-		 * @param int $maxChars The maximum number of characters for the description.
+		 * @param string|null $fallback Returned if no description is found.
 		 * @return string The extracted (and HTML-escaped) description.
 		 */
 		function getDescription($fallback = null) : string {
@@ -289,7 +289,7 @@
 				$this->description = trim($description);
 			}
 			// Ensure final description is trimmed
-			return empty($this->description) ? $fallback : $this->description;
+			return empty($this->description) ? ($fallback ?? '') : $this->description;
 		}
 
 		/**

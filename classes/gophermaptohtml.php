@@ -345,11 +345,11 @@
 			flush();
 		}
 
-		public function getTitle(string $fallback=null) : string {
-			return empty($this->title) ? $fallback : $this->title;
+		public function getTitle(?string $fallback=null) : string {
+			return empty($this->title) ? ($fallback ?? '') : $this->title;
 		}
 
-		public function getDescription(string $fallback=null) : string {
-			return empty($this->description) ? $fallback : $this->description;
+		public function getDescription(?string $fallback=null) : string {
+			return empty($this->description) ? ($fallback ?? '') : $this->description;
 		}
 	}

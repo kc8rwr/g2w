@@ -71,6 +71,7 @@
 
 	
 	$content = null;
+	$is_dir = false;
 
 	// Handle not-configured condition
 	if (empty(Config::$paths->contentRoot)) {
