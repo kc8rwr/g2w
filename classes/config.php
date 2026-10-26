@@ -315,11 +315,12 @@
 			Config::$paths->contentRoot = rtrim(Config::$paths->contentRoot, DIRECTORY_SEPARATOR);
 		}
 
-		Config::$paths->baseDir = dirname(trim($_SERVER['SCRIPT_NAME']));
+		$baseDir = rtrim(dirname(trim($_SERVER['SCRIPT_NAME'])), '/\\');
+		Config::$paths->baseDir = $baseDir . '/';
 		Config::$paths->requestUri = parse_url(trim($_SERVER['REQUEST_URI']), PHP_URL_PATH);
 
-		if (str_starts_with(Config::$paths->requestUri, Config::$paths->baseDir)) {
-			Config::$paths->relativeUri = substr(Config::$paths->requestUri, strlen(Config::$paths->baseDir));
+		if (str_starts_with(Config::$paths->requestUri, $baseDir)) {
+			Config::$paths->relativeUri = substr(Config::$paths->requestUri, strlen($baseDir));
 		} else {
 			Config::$paths->relativeUri = Config::$paths->requestUri;
 		}

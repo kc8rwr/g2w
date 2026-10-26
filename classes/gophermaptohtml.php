@@ -202,7 +202,7 @@
 					return "<div class=\"error\">{$name}</div>";
 				case '0': //txt
 					if ($this->isThisHost($host)){
-						return '(txt) - <a href="'. Config::$paths->baseDir . "/{$selector}\">{$name}</a><br/>";
+						return '(txt) - <a href="'. Config::$paths->baseDir . "{$selector}\">{$name}</a><br/>";
 					} else {
 						return "(txt) - <a href=\"gopher://{$host}:{$port}/0/{$selector}/\">{$name}</a><br/>";
 					}
