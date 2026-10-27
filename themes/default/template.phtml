@@ -10,9 +10,15 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
    </head>
    <body>
+		<div class="header">
+			<h1><?= $content->getTitle(Config::$aesthetics->siteTitle) ?></h1>
+		</div>
       <div class="content">
 			<?php $content->stream(); ?>
       </div>
+		<?php if (!empty(Config::$aesthetics->footerText)) { ?>
+		<div class="footer"><?= Config::$aesthetics->footerText ?></div>
+		<?php } ?>
 			<!-- Prism.js - syntax highlighting for code samples -->
 			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>

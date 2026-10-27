@@ -1,5 +1,22 @@
 body {
     background-color: orange;
+    margin: 0;
+    padding: 0.4em;
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;   /* mobile: ignores the collapsing URL bar; older browsers keep the vh line */
+    display: flex;
+    flex-direction: column;
+}
+
+div.header {
+    border-radius: 10px;
+    border:1px solid #262018;
+    margin:0.4em;
+    padding:1em;
+    background: #fffdfa;
+	 text-align: center;
+	 flex: 0 0 auto; /* stays it's natural height */
 }
 
 div.content {
@@ -8,6 +25,18 @@ div.content {
     margin:0.4em;
     padding:2em;
     background: #fffdfa;
+	 flex: 1 0 auto; /* grows to fill the rest, never srinks below its content */
+	 min-width: 0; /* keeps wide <pre>/code blocks from stretching the page sideways */
+}
+
+div.footer {
+    flex: 0 0 auto;       /* natural height, like the header */
+    border-radius: 10px;
+    border: 1px solid #262018;
+    margin: 0.4em;
+    padding: 1em;
+    background: #fffdfa;
+	 text-align: right;
 }
 
 .file-item:hover {

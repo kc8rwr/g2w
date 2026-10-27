@@ -937,8 +937,6 @@
 			$output .= "</div>";
 			$output .= "<span class=\"file-name\">{$file}</span>";
 			$output .= "</a></li>\n";
-			
-			$output .= "</li>\n";
 			return $output;
 		}
 
