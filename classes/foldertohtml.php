@@ -9,6 +9,24 @@
 		private $description = null; //< The meta description
 		
 		private int $indentLevel = 0; ///< The indentation level for the whole folder
+		private int $retroColumns = 0; ///< Table columns for retroHtml listings, 0 when not retro
+
+		/**
+		 * Pixels of the screen width a browser window keeps for itself: a 16px vertical scrollbar, which old IE shows
+		 * even on short pages, and about 4px of window frame and client edge on each side
+		 */
+		const RETRO_BROWSER_CHROME = 24;
+
+		/**
+		 * Pixels of a retroHtml page's width not available to the listing: retro.phtml's 8px page table cellspacing,
+		 * 1px panel borders and 24px content padding on each side
+		 */
+		const RETRO_PAGE_CHROME = 66;
+
+		/**
+		 * Pixels each retroHtml listing cell needs: the 64px icon plus room for the file name and cellpadding
+		 */
+		const RETRO_CELL_WIDTH = 100;
 		
 		/**
 		 * @brief Constructor for GenerateFolderHTML.
@@ -66,6 +84,9 @@
 			$this->indentLevel = max(0, $indentLevel);
 			$this->title = $title;
 			$this->description = $description;
+			if (Config::$aesthetics->retroHtml){
+				$this->retroColumns = max(1, intdiv(Config::$aesthetics->retroPixelWidth - self::RETRO_BROWSER_CHROME - self::RETRO_PAGE_CHROME, self::RETRO_CELL_WIDTH));
+			}
 		}
 
 		public function getTitle(?string $fallback = null) : string {
@@ -83,7 +104,15 @@
 		}
 
 		public function stream() : void {
-			$outputBuffer = str_repeat("\t", $this->indentLevel) . "<ul class=\"directory-grid\">\n";
+			if ($this->retroColumns > 0){
+				// Tables lay out in browsers too old for CSS, which would otherwise show one icon per line
+				$open = '<table class="directory-grid" width="100%" border="0" cellspacing="0" cellpadding="4">';
+				$close = '</table>';
+			} else {
+				$open = '<ul class="directory-grid">';
+				$close = '</ul>';
+			}
+			$outputBuffer = str_repeat("\t", $this->indentLevel) . $open . "\n";
 			foreach ($this as $line){
 				$outputBuffer .= "\t" . $line;
 				if (strlen($outputBuffer) >= Config::$advanced->bufferSize){
@@ -95,7 +124,7 @@
 			if ($outputBuffer !== '') {
 				echo $outputBuffer;
 			}
-			echo str_repeat("\t", $this->indentLevel) . "</ul>\n";
+			echo str_repeat("\t", $this->indentLevel) . $close . "\n";
 			flush();
 		}
 		
@@ -158,7 +187,20 @@
 			$line = null;
 			if ((!empty($this->files)) && $this->index < count($this->files)){
 				$line .= str_repeat("\t", $this->indentLevel);
+				if ($this->retroColumns > 0 && 0 === $this->index % $this->retroColumns){
+					$line .= '<tr>';
+				}
 				$line .= $this->fileNameToHtml($this->files[$this->index]);
+				if ($this->retroColumns > 0){
+					$isLast = $this->index === count($this->files) - 1;
+					if ($isLast){
+						// Pad the final row with empty cells so every row has the same number of columns
+						$line .= str_repeat('<td>&nbsp;</td>', $this->retroColumns - 1 - $this->index % $this->retroColumns);
+					}
+					if ($isLast || $this->retroColumns - 1 === $this->index % $this->retroColumns){
+						$line .= "</tr>\n";
+					}
+				}
 			}
 			$this->currentHtmlLine = $line;
 		}
@@ -927,16 +969,28 @@
 			// Determine the URL for the link
 			$linkUrl = ($file == '../') ? $file : urlencode($file);
 
-			$output .= str_repeat("\t", $this->indentLevel) . "<li class=\"file-item\"><a href=\"{$linkUrl}\">&nbsp;&nbsp;";
-			$output .= "<div class=\"file-icon\" role=\"img\" aria-hidden=\"true\">";
-			if (empty($icon)){
-				$output .= "<span class=\"icon-placeholder\">[{$ext}]</span>";
+			if ($this->retroColumns > 0){
+				// Sizes and alignment as HTML attributes for browsers without CSS, retro.css only refines them
+				$cellWidth = intdiv(100, $this->retroColumns);
+				$output .= "<td class=\"file-item\" width=\"{$cellWidth}%\" align=\"center\" valign=\"top\"><a href=\"{$linkUrl}\">";
+				if (empty($icon)){
+					$output .= "<span class=\"icon-placeholder\">[{$ext}]</span>";
+				} else {
+					$output .= "<img src=\"{$icon}\" width=\"64\" height=\"104\" border=\"0\" class=\"icon-img\" alt=\"{$label}\">";
+				}
+				$output .= "<br><font size=\"2\"><span class=\"file-name\">{$file}</span></font></a></td>";
 			} else {
-				$output .= "<img src=\"{$icon}\" class=\"icon-img\" alt=\"{$label}\" aria-hidden=\"true\" />";
+				$output .= str_repeat("\t", $this->indentLevel) . "<li class=\"file-item\"><a href=\"{$linkUrl}\">&nbsp;&nbsp;";
+				$output .= "<div class=\"file-icon\" role=\"img\" aria-hidden=\"true\">";
+				if (empty($icon)){
+					$output .= "<span class=\"icon-placeholder\">[{$ext}]</span>";
+				} else {
+					$output .= "<img src=\"{$icon}\" class=\"icon-img\" alt=\"{$label}\" aria-hidden=\"true\" />";
+				}
+				$output .= "</div>";
+				$output .= "<span class=\"file-name\">{$file}</span>";
+				$output .= "</a></li>\n";
 			}
-			$output .= "</div>";
-			$output .= "<span class=\"file-name\">{$file}</span>";
-			$output .= "</a></li>\n";
 			return $output;
 		}
 

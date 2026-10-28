@@ -356,7 +356,7 @@
 
 			// Special case for Gophermaps (often no extension)
 			if ($filename === 'gophermap' || str_starts_with($filename, '.gophermap')) {
-				return $path . $extension . $query . $fragment;
+				return $path . '.' . $extension . $query . $fragment;
 			}
 
 			// Otherwise, it's a binary, image, or directory—return as-is

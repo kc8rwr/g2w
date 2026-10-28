@@ -1,0 +1,23 @@
+/*
+ * Stylesheet for retroHtml. retro.phtml and the converters already set colors, borders, sizes and layout
+ * with HTML attributes, so this only refines them with CSS1 era rules that older browsers safely ignore.
+ */
+
+/* Lets retro.phtml's height="100%" page table fill the window in browsers that render in standards mode */
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+/* Folder listing, laid out as a table by FolderToHTML */
+.file-item a {
+	text-decoration: none;
+}
+
+.file-name {
+	word-wrap: break-word; /* long names wrap instead of widening their column, where supported */
+}
+
+pre {
+	white-space: pre;
+}

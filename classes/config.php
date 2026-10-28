@@ -132,9 +132,10 @@
 		];
 
 		/**
-		 * What extension should be used for 'virtual' html files.
+		 * What extension should be used for 'virtual' html files, without the leading dot.
+		 * Empty means htm when retroHtml is on, otherwise html.
 		 */
-		public string $htmlExt = 'html';
+		public string $htmlExt = '';
 	}
 
 	class ConfigAesthetics extends G2WConfig{
@@ -146,7 +147,12 @@
 		/**
 		 * Use older style html code for viewing in retro browsers
 		 */
-		public string $retroHtml = '';
+		public bool $retroHtml = false;
+
+		/**
+		 * Screen resolution width in pixels retroHtml pages are laid out for, used where old browsers need fixed sizes such as folder listing columns
+		 */
+		public int $retroPixelWidth = 640;
 
 		/**
 		 * Name of theme to apply
@@ -252,37 +258,63 @@
 		}
 
 		/**
+		 * URL of the favicon, or an empty string when useFavicon is off
+		 */
+		public function faviconUrl() : string{
+			return $this->useFavicon ? Config::$paths->baseDir . 'g2w/favicon.ico' . self::cacheBuster($this->themeFile('favicon.ico')) : '';
+		}
+
+		/**
+		 * URL of the background tile, or an empty string when useBackground is off
+		 */
+		public function backgroundUrl() : string{
+			return $this->useBackground ? Config::$paths->baseDir . 'g2w/background.gif' . self::cacheBuster($this->themeFile('background.gif')) : '';
+		}
+
+		/**
+		 * URL of the logo, or an empty string when useLogo is off
+		 */
+		public function logoUrl() : string{
+			return $this->useLogo ? Config::$paths->baseDir . 'g2w/logo.gif' . self::cacheBuster($this->themeFile('logo.gif')) : '';
+		}
+
+		/**
 		 * <link> tag for the favicon, or an empty string when useFavicon is off
 		 */
 		public function getFaviconLink() : string{
-			$output = '';
-			if ($this->useFavicon){
-				$output = Config::$paths->baseDir . 'g2w/favicon.ico' . self::cacheBuster($this->themeFile('favicon.ico'));
-				$output = "<link rel=\"icon\" href=\"{$output}\" />";
-			}
-			return $output;
+			$url = $this->faviconUrl();
+			return '' === $url ? '' : "<link rel=\"icon\" href=\"{$url}\" />";
 		}
 
 		/**
 		 * <style> tag tiling the page background with background.gif, or an empty string when useBackground is off
 		 */
 		public function getBackgroundLink() : string{
-			$output = '';
-			if ($this->useBackground){
-				$output = Config::$paths->baseDir . 'g2w/background.gif' . self::cacheBuster($this->themeFile('background.gif'));
-				$output = "<style>body { background-image: url(\"{$output}\"); background-repeat: repeat; }</style>";
-			}
-			return $output;
+			$url = $this->backgroundUrl();
+			return '' === $url ? '' : "<style>body { background-image: url(\"{$url}\"); background-repeat: repeat; }</style>";
 		}
 
 		/**
 		 * <img> tag for the logo, or an empty string when useLogo is off
 		 */
 		public function getLogoLink() : string{
-			$output = '';
-			if ($this->useLogo){
-				$output = Config::$paths->baseDir . 'g2w/logo.gif' . self::cacheBuster($this->themeFile('logo.gif'));
-				$output = "<img class=\"logo\" src=\"{$output}\" alt=\"\" />";
+			$url = $this->logoUrl();
+			return '' === $url ? '' : "<img class=\"logo\" src=\"{$url}\" alt=\"\" />";
+		}
+
+		/**
+		 * $colors matched by index to $defaults, as values usable in pre-CSS HTML attributes like bgcolor.
+		 * Only color names and hex values are accepted, 3 digit hex is expanded since old browsers only read 6.
+		 * Extra colors are ignored, missing or unusable ones get the default.
+		 */
+		public function htmlColors(array $defaults) : array{
+			$output = [];
+			foreach (array_values($defaults) as $i=> $default){
+				$value = trim($this->colors[$i] ?? '');
+				if (1 === preg_match('/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i', $value, $m)){
+					$value = "#{$m[1]}{$m[1]}{$m[2]}{$m[2]}{$m[3]}{$m[3]}";
+				}
+				$output[] = 1 === preg_match('/^(#[0-9a-f]{6}|[a-z]+)$/i', $value) ? $value : $default;
 			}
 			return $output;
 		}
@@ -403,6 +435,10 @@
 												Config::$$outer_key->$inner_key = array_map('trim', explode(',', $inner_value));
 											}
 										}
+										elseif ('aesthetics' === $outer_key && 'retroHtml' === $inner_key) {
+											// A quoted "false", "off" or "no" is a non-empty string, which a bool would read as true
+											Config::$$outer_key->$inner_key = filter_var($inner_value, FILTER_VALIDATE_BOOLEAN);
+										}
 										else {
 											Config::$$outer_key->$inner_key = $inner_value;
 										}
@@ -431,8 +467,20 @@
 		if (is_string(Config::$behaviors->ignoreFiles)){
 			Config::$behaviors->ignoreFiles = array_map('trim', explode(',', Config::$behaviors->ignoreFiles));
 		}
+		// Callers add the dot themselves, so drop one given in the ini
+		Config::$behaviors->htmlExt = ltrim(trim(Config::$behaviors->htmlExt), '.');
 		if (empty(Config::$behaviors->htmlExt)){
-			Config::$behaviors->htmlExt = Config::$aesthetics->retroHtml ? '.htm' : '.html';
+			Config::$behaviors->htmlExt = Config::$aesthetics->retroHtml ? 'htm' : 'html';
+		}
+
+		// parse_ini_file leaves escapes like \t as written, so turn them into the characters they name
+		Config::$gopher->gophermapSeparator = stripcslashes(Config::$gopher->gophermapSeparator);
+		if ('' === Config::$gopher->gophermapSeparator){
+			Config::$gopher->gophermapSeparator = "\t";
+		}
+
+		if (Config::$aesthetics->retroPixelWidth <= 0){
+			Config::$aesthetics->retroPixelWidth = 640;
 		}
 
 		if (!empty(Config::$paths->contentRoot)){

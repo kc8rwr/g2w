@@ -178,8 +178,7 @@
 			if (empty($line)) return "<br/>";
 
 			$type = $line[0]; // The first character
-			$separator = Config::$gopher->gophermapUseBrackets ?? "\t"; // Default separator
-			$parts = explode($separator, substr($line, 1));
+			$parts = explode(Config::$gopher->gophermapSeparator, substr($line, 1));
 			// Gopher requires at least 4 fields for a valid link
 			$name     = $parts[0] ?? '';
 			$selector = $parts[1] ?? '';
@@ -209,7 +208,7 @@
 				case '1': //dir or gopher submenu
 					$file_path = (Config::$paths->contentRoot ?? '') . "/{$selector}";
 					if (file_exists($file_path) && is_file($file_path)){
-						$selector .= (Config::$behaviors->htmlExt ?? '.html');
+						$selector .= '.' . Config::$behaviors->htmlExt;
 					}
 					if ($this->isThisHost($host)){
 						return '(mnu) - <a href="' . Config::$paths->baseUrl . "/{$selector}\">{$name}</a><br/>";
