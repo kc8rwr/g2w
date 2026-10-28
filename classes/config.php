@@ -149,11 +149,6 @@
 		public string $retroHtml = '';
 
 		/**
-		 * Name of image to use for the background
-		 */
-		public string $backgroundImage = '';
-
-		/**
 		 * Name of theme to apply
 		 */
 		public string $theme = '';
@@ -162,6 +157,135 @@
 		 * Text or html to include in the footer of all pages
 		 */
 		public string $footerText = '';
+
+		/**
+		 * Include a link to the favicon in the page head, either the theme's favicon.ico or one generated from the domain
+		 */
+		public bool $useFavicon = false;
+
+		/**
+		 * Tile the page background with an image, either the theme's background.gif or one generated from the domain
+		 */
+		public bool $useBackgroundGif = false;
+
+		/**
+		 * Show a logo in the page header, either the theme's logo.gif or one generated from the domain
+		 */
+		public bool $useLogo = false;
+
+		/**
+		 * A list of colors to be consumed by the theme's template.phtml. Each theme decides how many it uses and what each index means.
+		 */
+		public array $colors = array();
+		
+		/**
+		 * Only characters that can appear in a CSS color, so a value can't break out of the rule
+		 */
+		private static function isCssColor(string $value) : bool{
+			return '' !== trim($value) && 1 === preg_match('/^[#\w\s(),.%+\/-]+$/', $value);
+		}
+
+		/**
+		 * Build a :root rule setting a theme's CSS variables from $colors, matched by index.
+		 * Extra colors are ignored, missing or invalid ones leave the theme's default.
+		 * Returns an empty string when there is nothing to override.
+		 */
+		public function colorOverrides(array $variableNames) : string{
+			$output = '';
+			foreach (array_values($variableNames) as $i=> $name){
+				$value = trim($this->colors[$i] ?? '');
+				if (self::isCssColor($value)){
+					$output .= " $name: $value;";
+				}
+			}
+			return '' === $output ? '' : ":root {{$output} }";
+		}
+
+		/**
+		 * Cache busting query string from the newer of the config and $path, if $path exists.
+		 * Empty when the config's lastmod is unknown.
+		 * @internal Used by the get*Link() methods and FolderToHTML, not meant for templates
+		 */
+		public static function cacheBuster(?string $path = null) : string{
+			if (Config::$lastmod <= 0){
+				return '';
+			}
+			$lastmod = Config::$lastmod;
+			if (!empty($path) && file_exists($path)){
+				$lastmod = max(filemtime($path), $lastmod);
+			}
+			return "?v={$lastmod}";
+		}
+
+		/**
+		 * File path of $filename in the selected theme's folder, whether or not it exists
+		 * @internal Used by the get*Link() methods and g2w.php's routes, not meant for templates
+		 */
+		public function themeFile(string $filename) : string{
+			return Config::$paths->basePath . '/themes/' . $this->theme . '/' . $filename;
+		}
+
+		/**
+		 * File path of the stylesheet served at g2w/g2w.css: the theme's, falling back to the default theme's,
+		 * preferring retro.css over g2w.css when retroHtml is on. null if none exists.
+		 * @internal Used by getStylesheetLink() and g2w.php's g2w/g2w.css route, not meant for templates
+		 */
+		public function stylesheetPath() : ?string{
+			$filenames = $this->retroHtml ? ['retro.css', 'g2w.css'] : ['g2w.css'];
+			foreach ($filenames as $filename){
+				if (!empty($this->theme) && 0 !== strcasecmp($this->theme, 'default') && file_exists($this->themeFile($filename))){
+					return $this->themeFile($filename);
+				}
+				if (file_exists(Config::$paths->basePath . '/themes/default/' . $filename)){
+					return Config::$paths->basePath . '/themes/default/' . $filename;
+				}
+			}
+			return null;
+		}
+
+		/**
+		 * <link> tag for the stylesheet, cache busted by whichever file stylesheetPath() serves
+		 */
+		public function getStylesheetLink() : string{
+			$url = Config::$paths->baseDir . 'g2w/g2w.css' . self::cacheBuster($this->stylesheetPath());
+			return "<link rel=\"stylesheet\" type=\"text/css\" href=\"{$url}\" />";
+		}
+
+		/**
+		 * <link> tag for the favicon, or an empty string when useFavicon is off
+		 */
+		public function getFaviconLink() : string{
+			$output = '';
+			if ($this->useFavicon){
+				$output = Config::$paths->baseDir . 'g2w/favicon.ico' . self::cacheBuster($this->themeFile('favicon.ico'));
+				$output = "<link rel=\"icon\" href=\"{$output}\" />";
+			}
+			return $output;
+		}
+
+		/**
+		 * <style> tag tiling the page background with background.gif, or an empty string when useBackgroundGif is off
+		 */
+		public function getBackgroundLink() : string{
+			$output = '';
+			if ($this->useBackgroundGif){
+				$output = Config::$paths->baseDir . 'g2w/background.gif' . self::cacheBuster($this->themeFile('background.gif'));
+				$output = "<style>body { background-image: url(\"{$output}\"); background-repeat: repeat; }</style>";
+			}
+			return $output;
+		}
+
+		/**
+		 * <img> tag for the logo, or an empty string when useLogo is off
+		 */
+		public function getLogoLink() : string{
+			$output = '';
+			if ($this->useLogo){
+				$output = Config::$paths->baseDir . 'g2w/logo.gif' . self::cacheBuster($this->themeFile('logo.gif'));
+				$output = "<img class=\"logo\" src=\"{$output}\" alt=\"\" />";
+			}
+			return $output;
+		}
 	}
 	
 	class ConfigSEO extends G2WConfig{
@@ -190,7 +314,7 @@
 		public string $gophermapSeparator = "\t";
 
 		/**
-		 * Surround items in gophermpas with brackets
+		 * Surround items in gophermaps with brackets
 		 */
 		public bool $gophermapUseBrackets = false;
 	}

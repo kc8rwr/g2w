@@ -6,11 +6,29 @@
 		<?php if (!empty($content->getDescription())){ ?>
 			<meta name="description" content="<?= $content->getDescription() ?>" />
 		<?php } ?>
-		<link rel="stylesheet" type="text/css" href="<?=Config::$paths->baseDir?>g2w/g2w.css" />
+		<?= Config::$aesthetics->getStylesheetLink() ?>
+		<?= Config::$aesthetics->getFaviconLink() ?>
+		<?php
+			// CSS variables this theme lets Config::$aesthetics->colors override, by index
+			$colorVariables = [
+				'--g2w-page-bg',
+				'--g2w-text',
+				'--g2w-panel-bg',
+				'--g2w-panel-border',
+				'--g2w-icon-bg',
+				'--g2w-icon-border',
+			];
+			$cssVariables = Config::$aesthetics->colorOverrides($colorVariables);
+		?>
+		<?php if (!empty($cssVariables)){ ?>
+			<style><?= $cssVariables ?></style>
+		<?php } ?>
+		<?= Config::$aesthetics->getBackgroundLink() ?>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
    </head>
    <body>
 		<div class="header">
+			<?= Config::$aesthetics->getLogoLink() ?>
 			<h1><?= $content->getTitle(Config::$aesthetics->siteTitle) ?></h1>
 		</div>
       <div class="content">

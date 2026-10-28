@@ -1164,15 +1164,9 @@
 			$output = null;
 			$file_path = static::getIconPath($icon);
 			if (!empty($file_path)){
-				$lastmod_suffix = '';
-				if (Config::$lastmod > 0) { // Only add if configLastmod is provided
-					$lastmod = filemtime($file_path);
-					$lastmod = max($lastmod, Config::$lastmod);
-					$lastmod_suffix = "?v={$lastmod}";
-				}
 				// Construct the URL relative to the base URL
 				// Assuming g2w/icons/ is a virtual path handled by the web server
-				$output = Config::$paths->baseUrl . "/g2w/icons/{$icon}.gif{$lastmod_suffix}";
+				$output = Config::$paths->baseUrl . "/g2w/icons/{$icon}.gif" . ConfigAesthetics::cacheBuster($file_path);
 			}
 			return $output;
 		}

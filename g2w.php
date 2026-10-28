@@ -69,7 +69,36 @@
 		exit;
 	}
 
-	
+	function streamData(string $data, string $mimeType)
+	{
+		header("Content-Type: " . $mimeType);
+		header("Content-Length: " . strlen($data));
+		header("Cache-Control: public, max-age=86400");
+		if (ob_get_level()) ob_end_clean();
+		echo $data;
+		exit;
+	}
+
+	/**
+	 * DomainArt for the requested host, tinted with the first configured color if there is one
+	 * and hueOf understands it, else with a hue derived from the domain.
+	 */
+	function domainArt() : DomainArt
+	{
+		$host = strtolower(preg_replace('/:\d+$/', '', trim($_SERVER['HTTP_HOST'] ?? '')));
+		$hue = null;
+		$color = trim(Config::$aesthetics->colors[0] ?? '');
+		if ('' !== $color){
+			try{
+				$hue = DomainArt::hueOf($color);
+			} catch (InvalidArgumentException){
+				// Not a color name or hex value hueOf understands
+			}
+		}
+		return new DomainArt($host, $hue);
+	}
+
+
 	$content = null;
 	$is_dir = false;
 
@@ -99,27 +128,7 @@
 	if (is_null($content)){
 		// CSS
 		if ('g2w/g2w.css' == Config::$paths->relativeUri){
-			$css_path = null;
-			if (Config::$aesthetics->retroHtml){
-				if ((!empty(Config::$aesthetics->theme)) && 0 !== strcasecmp(Config::$aesthetics->theme, 'default')){
-					if (file_exists(Config::$paths->basePath . '/themes/' . Config::$aesthetics->theme . '/retro.css')){
-						$css_path = Config::$paths->basePath . '/themes/' . Config::$aesthetics->theme . '/retro.css';
-					}
-				}
-				if (empty($css_path) && file_exists(Config::$paths->basePath . '/themes/default/retro.css')){
-					$css_path = Config::$paths->basePath . '/themes/default/retro.css';
-				}
-			}
-			if (empty($css_path)){
-				if ((!empty(Config::$aesthetics->theme)) && 0 !== strcasecmp(Config::$aesthetics->theme, 'default')){
-					if (file_exists(Config::$paths->basePath . '/themes/' . Config::$aesthetics->theme . '/g2w.css')){
-						$css_path = Config::$paths->basePath . '/themes/' . Config::$aesthetics->theme . '/g2w.css';
-					}
-				}
-				if (empty($css_path) && file_exists(Config::$paths->basePath . '/themes/default/g2w.css')){
-					$css_path = Config::$paths->basePath . '/themes/default/g2w.css';
-				}
-			}
+			$css_path = Config::$aesthetics->stylesheetPath();
 			if (empty($css_path)){
 				http_response_code(404);
 				$title = "404 Error - Page Not Found";
@@ -141,6 +150,62 @@
 			} else {
 				streamFile($icon);
 				exit();
+			}
+		}
+		// Favicon
+		elseif ('g2w/favicon.ico' == Config::$paths->relativeUri){
+			$favicon = Config::$aesthetics->themeFile('favicon.ico');
+			if (!Config::$aesthetics->useFavicon){
+				http_response_code(404);
+				$title = '404 Error - Page Not Found';
+				$content = "# Error Four Zero Four\nPage Not Found";
+				$content = new GemTextToHTML($content, false, 2, $title, '');
+			} elseif (file_exists($favicon)){
+				// Themes may ship any image format named favicon.ico, so detect the type from its contents
+				streamFile($favicon);
+				exit();
+			} else {
+				streamData(domainArt()->faviconIco(), 'image/x-icon');
+			}
+		}
+		// Background
+		elseif ('g2w/background.gif' == Config::$paths->relativeUri){
+			$background = Config::$aesthetics->themeFile('background.gif');
+			$gif = null;
+			if (Config::$aesthetics->useBackgroundGif && !file_exists($background)){
+				// Smaller than the default tile size, so more of the pattern shows in narrow gaps. null when no raster backend can write GIF
+				$gif = domainArt()->background('gif', 32);
+			}
+			if (!Config::$aesthetics->useBackgroundGif || (!file_exists($background) && null === $gif)){
+				http_response_code(404);
+				$title = '404 Error - Page Not Found';
+				$content = "# Error Four Zero Four\nPage Not Found";
+				$content = new GemTextToHTML($content, false, 2, $title, '');
+			} elseif (file_exists($background)){
+				// Themes may ship any image format named background.gif, so detect the type from its contents
+				streamFile($background);
+			} else {
+				streamData($gif, 'image/gif');
+			}
+		}
+		// Logo
+		elseif ('g2w/logo.gif' == Config::$paths->relativeUri){
+			$logo = Config::$aesthetics->themeFile('logo.gif');
+			$gif = null;
+			if (Config::$aesthetics->useLogo && !file_exists($logo)){
+				// The domain's identicon, transparent background. null when no raster backend can write GIF
+				$gif = domainArt()->favicon(64, 'gif');
+			}
+			if (!Config::$aesthetics->useLogo || (!file_exists($logo) && null === $gif)){
+				http_response_code(404);
+				$title = '404 Error - Page Not Found';
+				$content = "# Error Four Zero Four\nPage Not Found";
+				$content = new GemTextToHTML($content, false, 2, $title, '');
+			} elseif (file_exists($logo)){
+				// Themes may ship any image format named logo.gif, so detect the type from its contents
+				streamFile($logo);
+			} else {
+				streamData($gif, 'image/gif');
 			}
 		}
 	}
