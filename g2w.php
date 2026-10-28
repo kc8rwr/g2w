@@ -172,11 +172,11 @@
 		elseif ('g2w/background.gif' == Config::$paths->relativeUri){
 			$background = Config::$aesthetics->themeFile('background.gif');
 			$gif = null;
-			if (Config::$aesthetics->useBackgroundGif && !file_exists($background)){
+			if (Config::$aesthetics->useBackground && !file_exists($background)){
 				// Smaller than the default tile size, so more of the pattern shows in narrow gaps. null when no raster backend can write GIF
 				$gif = domainArt()->background('gif', 32);
 			}
-			if (!Config::$aesthetics->useBackgroundGif || (!file_exists($background) && null === $gif)){
+			if (!Config::$aesthetics->useBackground || (!file_exists($background) && null === $gif)){
 				http_response_code(404);
 				$title = '404 Error - Page Not Found';
 				$content = "# Error Four Zero Four\nPage Not Found";

@@ -166,7 +166,7 @@
 		/**
 		 * Tile the page background with an image, either the theme's background.gif or one generated from the domain
 		 */
-		public bool $useBackgroundGif = false;
+		public bool $useBackground = false;
 
 		/**
 		 * Show a logo in the page header, either the theme's logo.gif or one generated from the domain
@@ -264,11 +264,11 @@
 		}
 
 		/**
-		 * <style> tag tiling the page background with background.gif, or an empty string when useBackgroundGif is off
+		 * <style> tag tiling the page background with background.gif, or an empty string when useBackground is off
 		 */
 		public function getBackgroundLink() : string{
 			$output = '';
-			if ($this->useBackgroundGif){
+			if ($this->useBackground){
 				$output = Config::$paths->baseDir . 'g2w/background.gif' . self::cacheBuster($this->themeFile('background.gif'));
 				$output = "<style>body { background-image: url(\"{$output}\"); background-repeat: repeat; }</style>";
 			}
