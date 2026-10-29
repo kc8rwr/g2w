@@ -18,6 +18,17 @@ html, body {
 	word-wrap: break-word; /* long names wrap instead of widening their column, where supported */
 }
 
+/* Inline gemtext images, already scaled to fit retroPixelWidth by width/height attributes, this fits narrower windows */
+img.gem {
+	max-width: 100%;
+	height: auto;
+}
+
+/* The table holding an inline image and its label has none of a paragraph's spacing */
+table.gem_image {
+	margin: 1em 0;
+}
+
 pre {
 	white-space: pre;
 }

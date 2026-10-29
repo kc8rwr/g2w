@@ -127,6 +127,12 @@ final class DomainArt
 		return $offsets;
 	}
 
+	/** The background tile's base fill as "#rrggbb", for a page color that matches the tile. */
+	public function backgroundColor(): string
+	{
+		return vsprintf('#%02x%02x%02x', self::hslToRgb($this->hue, .30, self::BG_LIGHTNESS / 100));
+	}
+
 	/** Seamless repeating tile as SVG. */
 	public function backgroundSvg(int $size = self::TILE): string
 	{

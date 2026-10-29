@@ -133,6 +133,33 @@ final class RasterFactory
 	}
 
 	/**
+	 * An image file's size in pixels as [width, height], or null if it can't be read or nothing here can measure it.
+	 * Tries PHP's own getimagesize() (no GD needed), then Imagick, then the ImageMagick/GraphicsMagick programs.
+	 * Only the first frame of an animation is measured.
+	 *
+	 * @return array{int, int}|null
+	 */
+	public static function imageSize(string $path): ?array
+	{
+		$size = null;
+		if (is_file($path) && is_readable($path)) {
+			if (function_exists('getimagesize')) {
+				$info = @getimagesize($path);
+				if ($info !== false && $info[0] > 0 && $info[1] > 0) {
+					$size = [$info[0], $info[1]];
+				}
+			}
+			if ($size === null && ImagickRaster::available()) {
+				$size = ImagickRaster::imageSize($path);
+			}
+			if ($size === null) {
+				$size = CliRaster::find()?->imageSize($path);
+			}
+		}
+		return $size;
+	}
+
+	/**
 	 * The first usable backend that can write $format ('png' or 'gif'),
 	 * or null if nothing here can. Stops at the first hit, so later backends aren't probed.
 	 */
@@ -254,6 +281,21 @@ final class ImagickRaster implements Raster
 	public function supports(string $format): bool
 	{
 		return \Imagick::queryFormats(strtoupper($format)) !== [];
+	}
+
+	/** @return array{int, int}|null  see RasterFactory::imageSize() */
+	public static function imageSize(string $path): ?array
+	{
+		$size = null;
+		try {
+			$im = new \Imagick();
+			$im->pingImage($path . '[0]'); // reads the header only, not the pixels
+			if ($im->getImageWidth() > 0 && $im->getImageHeight() > 0) {
+				$size = [$im->getImageWidth(), $im->getImageHeight()];
+			}
+		} catch (\ImagickException) {
+		}
+		return $size;
 	}
 
 	public function render(Scene $s, string $format): string
@@ -393,6 +435,21 @@ final class CliRaster implements Raster
 		fclose($pipes[1]);
 		fclose($pipes[2]);
 		return [$out, $err, proc_close($p)];
+	}
+
+	/** @return array{int, int}|null  see RasterFactory::imageSize() */
+	public function imageSize(string $path): ?array
+	{
+		$size = null;
+		// GraphicsMagick's convert has no info: output, its identify does the same job
+		$argv = basename($this->cmd[0]) === 'gm'
+			? [$this->cmd[0], 'identify', '-format', '%w %h\n', $path . '[0]']
+			: [...$this->cmd, $path . '[0]', '-format', '%w %h\n', 'info:'];
+		[$out, , $code] = self::run($argv);
+		if ($code === 0 && preg_match('/^(\d+) (\d+)/', $out, $m) && $m[1] > 0 && $m[2] > 0) {
+			$size = [(int) $m[1], (int) $m[2]];
+		}
+		return $size;
 	}
 
 	/**

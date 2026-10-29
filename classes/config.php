@@ -98,6 +98,25 @@
 			return DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $safe);
 		}
 
+		/**
+		 * File path a relative link points to, the same way a requested URL is mapped to a file.
+		 * Links starting with / are from the content root, others from $fromDir, the folder of the file the link is in.
+		 * Null when there is no content root or the link leads outside it. The file may not exist.
+		 */
+		public function contentPath(string $link, string $fromDir) : ?string{
+			$contentPath = null;
+			if (!empty($this->contentRoot)){
+				$path = parse_url($link, PHP_URL_PATH) ?? '';
+				$dir = str_starts_with($path, '/') ? $this->contentRoot : $fromDir;
+				$normalized = self::normalizePath($dir . DIRECTORY_SEPARATOR . $path);
+				// normalizePath() only stops ../ at the filesystem root, so make sure it stayed in the content root
+				if (str_starts_with($normalized, $this->contentRoot . DIRECTORY_SEPARATOR)){
+					$contentPath = $normalized;
+				}
+			}
+			return $contentPath;
+		}
+
 	}
 
 	class ConfigBehaviors extends G2WConfig {
@@ -139,6 +158,18 @@
 	}
 
 	class ConfigAesthetics extends G2WConfig{
+		/**
+		 * Pixels of the screen width a browser window keeps for itself: a 16px vertical scrollbar, which old IE shows
+		 * even on short pages, and about 4px of window frame and client edge on each side
+		 */
+		const RETRO_BROWSER_CHROME = 24;
+
+		/**
+		 * Pixels of a retroHtml page's width not available to content: retro.phtml's 8px page table cellspacing,
+		 * 1px panel borders and 24px content padding on each side
+		 */
+		const RETRO_PAGE_CHROME = 66;
+
 		/**
 		 * Title to use for pages where one cannot be easily implied
 		 */
@@ -190,6 +221,13 @@
 		public bool $inlineImages = false;
 		
 		/**
+		 * Pixels wide the content panel's inside is on a retroHtml page at retroPixelWidth
+		 */
+		public function retroContentWidth() : int{
+			return $this->retroPixelWidth - self::RETRO_BROWSER_CHROME - self::RETRO_PAGE_CHROME;
+		}
+
+		/**
 		 * Only characters that can appear in a CSS color, so a value can't break out of the rule
 		 */
 		private static function isCssColor(string $value) : bool{
@@ -198,13 +236,17 @@
 
 		/**
 		 * Build a :root rule setting a theme's CSS variables from $colors, matched by index.
-		 * Extra colors are ignored, missing or invalid ones leave the theme's default.
-		 * Returns an empty string when there is nothing to override.
+		 * Missing or invalid colors use $fallbacks at the same index instead, and with no fallback either leave the theme's default.
+		 * Extra colors are ignored. Returns an empty string when there is nothing to override.
 		 */
-		public function colorOverrides(array $variableNames) : string{
+		public function colorOverrides(array $variableNames, array $fallbacks = []) : string{
 			$output = '';
+			$fallbacks = array_values($fallbacks);
 			foreach (array_values($variableNames) as $i=> $name){
 				$value = trim($this->colors[$i] ?? '');
+				if (!self::isCssColor($value)){
+					$value = trim($fallbacks[$i] ?? '');
+				}
 				if (self::isCssColor($value)){
 					$output .= " $name: $value;";
 				}

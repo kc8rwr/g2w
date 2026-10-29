@@ -1,12 +1,18 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <?php
-	// Same colors and order as template.phtml's CSS variables, as HTML attributes for browsers without CSS
-	[$pageBg, $text, $panelBg, $panelBorder] = Config::$aesthetics->htmlColors([
-		'#ffa500', // orange, by hex since some old browsers don't know the name
+	// Same colors and order as template.phtml's CSS variables, as HTML attributes for browsers without CSS.
+	// Without a configured page color, match the domain's background tile
+	[$pageBg, $text, $panelBg, $panelBorder, , $iconBorder] = Config::$aesthetics->htmlColors([
+		domainArt()->backgroundColor(),
 		'#000000',
 		'#fffdfa',
 		'#262018',
+		'#eeeeee',
+		'#cccccc',
 	]);
+
+	// Frame around inline gemtext images: panel colored inside, a 1 pixel icon border colored edge
+	GemTextToHTML::$retroImageColors = [$panelBg, $iconBorder];
 
 	// A 1 pixel border made by a border colored table padding a panel colored one, since bordercolor isn't portable
 	// $fill stretches the panel to the height of the cell it is in, for the content panel to fill the window

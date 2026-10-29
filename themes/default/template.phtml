@@ -18,7 +18,8 @@
 				'--g2w-icon-bg',
 				'--g2w-icon-border',
 			];
-			$cssVariables = Config::$aesthetics->colorOverrides($colorVariables);
+			// Without a configured page color, match the domain's background tile
+			$cssVariables = Config::$aesthetics->colorOverrides($colorVariables, [domainArt()->backgroundColor()]);
 		?>
 		<?php if (!empty($cssVariables)){ ?>
 			<style><?= $cssVariables ?></style>

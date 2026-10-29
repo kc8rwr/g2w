@@ -12,18 +12,6 @@
 		private int $retroColumns = 0; ///< Table columns for retroHtml listings, 0 when not retro
 
 		/**
-		 * Pixels of the screen width a browser window keeps for itself: a 16px vertical scrollbar, which old IE shows
-		 * even on short pages, and about 4px of window frame and client edge on each side
-		 */
-		const RETRO_BROWSER_CHROME = 24;
-
-		/**
-		 * Pixels of a retroHtml page's width not available to the listing: retro.phtml's 8px page table cellspacing,
-		 * 1px panel borders and 24px content padding on each side
-		 */
-		const RETRO_PAGE_CHROME = 66;
-
-		/**
 		 * Pixels each retroHtml listing cell needs: the 64px icon plus room for the file name and cellpadding
 		 */
 		const RETRO_CELL_WIDTH = 100;
@@ -85,7 +73,7 @@
 			$this->title = $title;
 			$this->description = $description;
 			if (Config::$aesthetics->retroHtml){
-				$this->retroColumns = max(1, intdiv(Config::$aesthetics->retroPixelWidth - self::RETRO_BROWSER_CHROME - self::RETRO_PAGE_CHROME, self::RETRO_CELL_WIDTH));
+				$this->retroColumns = max(1, intdiv(Config::$aesthetics->retroContentWidth(), self::RETRO_CELL_WIDTH));
 			}
 		}
 

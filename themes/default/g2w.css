@@ -1,5 +1,5 @@
+/* --g2w-page-bg has no default here, template.phtml sets it from the configured color or the domain's background tile */
 :root {
-    --g2w-page-bg:      orange;
     --g2w-text:         #000;
     --g2w-panel-bg:     #fffdfa;
     --g2w-panel-border: #262018;
@@ -63,6 +63,25 @@ div.footer {
     padding: 1em;
     background: var(--g2w-panel-bg);
 	 text-align: right;
+}
+
+/* Inline gemtext images, a left aligned card shrunk to the image with its link as a caption centered above */
+figure.gem_image {
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 1em 0;
+    padding: 0.5em;
+    text-align: center;
+    border: 1px solid var(--g2w-icon-border);
+    border-radius: 10px;
+}
+
+figure.gem_image img.gem {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0.5em auto 0;
 }
 
 .file-item:hover {

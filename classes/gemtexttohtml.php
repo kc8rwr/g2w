@@ -28,6 +28,17 @@
 		private $indentLevel = 0; ///< Current indentation level.
 
 		/**
+		 * Pixels between a retroHtml inline image's frame and its label and image, about g2w.css's 0.5em
+		 */
+		const RETRO_IMAGE_PADDING = 6;
+
+		/**
+		 * [panel background, border] colors for retroHtml inline image frames as HTML attribute values,
+		 * set by the theme's retro.phtml. Empty leaves the frame uncolored, so it has no visible border.
+		 */
+		public static array $retroImageColors = [];
+
+		/**
 		 * @brief Constructor for GemTextToHTML.
 		 *
 		 * Initializes the converter with either a Gemtext string or a file path.
@@ -308,7 +319,21 @@
 							case 'jpg':
 							case 'jpeg':
 								$inline = true;
-								$html .= $this->getIndentation() . '<p class="gem_image"><img class="gem" src="' . htmlspecialchars($url) . '" alt="' . htmlspecialchars($label) . "\" /></p>\n";
+								$aOpen = '<a class="gem" href="' . htmlspecialchars($url) . '">';
+								$link = $aOpen . htmlspecialchars($label) . '</a>';
+								$img = '<img class="gem" src="' . htmlspecialchars($url) . '" alt="' . htmlspecialchars($label) . '"' . $this->imageSizeAttributes($url);
+								if (Config::$aesthetics->retroHtml){
+									// No figure or fit-content in old browsers, a table without a width shrinks to the image instead and its cell centers the label.
+									// The 1 pixel border is a border colored table padding a panel colored one, like retro.phtml's panels.
+									// border="0" drops the link border around the image
+									$panelBg = isset(self::$retroImageColors[0]) ? ' bgcolor="' . htmlspecialchars(self::$retroImageColors[0]) . '"' : '';
+									$border = isset(self::$retroImageColors[1]) ? ' bgcolor="' . htmlspecialchars(self::$retroImageColors[1]) . '"' : '';
+									$html .= $this->getIndentation() . "<table class=\"gem_image\" border=\"0\" cellspacing=\"0\" cellpadding=\"1\"{$border}><tr><td>"
+										. "<table border=\"0\" cellspacing=\"0\" cellpadding=\"" . self::RETRO_IMAGE_PADDING . "\"{$panelBg}><tr><td align=\"center\">"
+										. "{$link}<br>{$aOpen}{$img} border=\"0\"></a></td></tr></table></td></tr></table>\n";
+								} else {
+									$html .= $this->getIndentation() . "<figure class=\"gem_image\"><figcaption>{$link}</figcaption>{$aOpen}{$img} /></a></figure>\n";
+								}
 								break;
 							}
 						}
@@ -336,6 +361,35 @@
 			}
 
 			return $html;
+		}
+
+		/**
+		 * @brief width and height attributes for an inline image, or '' if its size can't be found.
+		 *
+		 * In retroHtml, images wider than the content panel are scaled down to fit, keeping their proportions,
+		 * since old browsers don't know CSS max-width. Otherwise they are the natural size, which reserves the space
+		 * while loading and g2w.css's max-width still scales them.
+		 *
+		 * @param string $url The image's relative link.
+		 * @return string The attributes with a leading space, or ''.
+		 */
+		private function imageSizeAttributes(string $url) : string {
+			$attributes = '';
+			$imagePath = Config::$paths->contentPath($url, is_null($this->path) ? Config::$paths->requestedPathDir : dirname($this->path));
+			$size = is_null($imagePath) ? null : RasterFactory::imageSize($imagePath);
+			if (!is_null($size)){
+				[$width, $height] = $size;
+				if (Config::$aesthetics->retroHtml){
+					// Leave room for the frame's 1px border and padding on each side
+					$maxWidth = Config::$aesthetics->retroContentWidth() - 2 * (1 + self::RETRO_IMAGE_PADDING);
+					if ($width > $maxWidth){
+						$height = max(1, (int) round($height * $maxWidth / $width));
+						$width = $maxWidth;
+					}
+				}
+				$attributes = " width=\"{$width}\" height=\"{$height}\"";
+			}
+			return $attributes;
 		}
 
 		/**
