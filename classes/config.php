@@ -183,6 +183,11 @@
 		 * A list of colors to be consumed by the theme's template.phtml. Each theme decides how many it uses and what each index means.
 		 */
 		public array $colors = array();
+
+		/**
+		 * With relative links to images display the image inline instead of just a link
+		 */
+		public bool $inlineImages = false;
 		
 		/**
 		 * Only characters that can appear in a CSS color, so a value can't break out of the rule

@@ -296,7 +296,27 @@
 				$url = $linkParts[0] ?? '';
 				$url = $this->rewriteLink(url: $url, extension: Config::$behaviors->htmlExt);
 				$label = $linkParts[1] ?? $url;
-				$html .= $this->getIndentation() . "<p class=\"gem_link\"><a class=\"gem\" href=\"" . htmlspecialchars($url) . "\">" . htmlspecialchars($label) . "</a></p>\n";
+				$inline = false;
+				if (Config::$aesthetics->inlineImages){
+					if (empty(parse_url($url, PHP_URL_SCHEME))){
+						$ext = pathinfo($url, PATHINFO_EXTENSION) ?: null;
+						if (!is_null($ext)){
+							$ext = strToLower($ext);
+							switch ($ext){
+							case 'gif':
+							case 'png':
+							case 'jpg':
+							case 'jpeg':
+								$inline = true;
+								$html .= $this->getIndentation() . '<p class="gem_image"><img class="gem" src="' . htmlspecialchars($url) . '" alt="' . htmlspecialchars($label) . "\" /></p>\n";
+								break;
+							}
+						}
+					}
+				}
+				if (!$inline){
+					$html .= $this->getIndentation() . "<p class=\"gem_link\"><a class=\"gem\" href=\"" . htmlspecialchars($url) . "\">" . htmlspecialchars($label) . "</a></p>\n";
+				}
 			}
 
 			// BlockQuote Content (handled in state machine above, but this catches leading > on a non-blockquote line)
