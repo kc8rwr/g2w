@@ -116,7 +116,9 @@
 	}
 
 	// Handle out of bounds request
-	if (is_null($content) && !str_starts_with(Config::$paths->requestedPath, Config::$paths->contentRoot)){
+	// The root itself or something inside it, a sibling folder whose name starts the same doesn't count
+	if (is_null($content) && Config::$paths->requestedPath !== Config::$paths->contentRoot
+		&& !str_starts_with(Config::$paths->requestedPath, Config::$paths->contentRoot . DIRECTORY_SEPARATOR)){
 		http_response_code(400);
 		$title = 'Bad Request';
 		$content = '#Bad Request\nOut of Bounds';
