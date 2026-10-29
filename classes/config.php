@@ -504,10 +504,23 @@
 		Config::$paths->relativeUri = ltrim(Config::$paths->relativeUri, '/');
 		Config::$paths->requestedPath = ConfigPaths::normalizePath(Config::$paths->contentRoot . DIRECTORY_SEPARATOR . Config::$paths->relativeUri);
 		Config::$paths->requestedPathDir = is_dir(Config::$paths->requestedPath) ? Config::$paths->requestedPath : dirname(Config::$paths->requestedPath);
-		Config::$paths->baseUrl = (!empty(trim($_SERVER['HTTPS'])) && trim($_SERVER['HTTPS']) !== 'off' || trim($_SERVER['SERVER_PORT']) == 443) ? "https://" : "http://";
-		Config::$paths->baseUrl .= trim($_SERVER['HTTP_HOST']);
-		Config::$paths->baseUrl .= Config::$paths->baseDir;
-		Config::$paths->baseUrl = rtrim(Config::$paths->baseUrl, '/');
+
+		$https   = strtolower(trim($_SERVER['HTTPS'] ?? ''));
+		$port    = (int)($_SERVER['SERVER_PORT'] ?? 80);
+		$isHttps = ($https !== '' && $https !== 'off') || $port === 443;
+		$scheme  = $isHttps ? 'https' : 'http';
+
+		// HTTP_HOST already carries a non-default port ("example.com:8443")
+		$host = trim($_SERVER['HTTP_HOST'] ?? '');
+		if ($host === '') {
+			$host = $_SERVER['SERVER_NAME'] ?? 'localhost';
+			$defaultPort = $isHttps ? 443 : 80;
+			if ($port !== $defaultPort) {
+				$host .= ':' . $port;
+			}
+		}
+
+		Config::$paths->baseUrl  = rtrim("{$scheme}://{$host}" . Config::$paths->baseDir, '/');
 		Config::$paths->basePath = dirname(__DIR__);
 		
 		$defBehavior = Config::$behaviors->allowOriginalDownload[0];
