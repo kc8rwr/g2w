@@ -63,6 +63,11 @@
 		public string $baseUrl;
 
 		/**
+		 * URL of the requested content's directory, for a base href so relative links resolve against it
+		 */
+		public string $baseHref;
+
+		/**
 		 * Path to the base of G2W
 		 */
 		public string $basePath;
@@ -564,6 +569,7 @@
 
 		Config::$paths->baseUrl  = rtrim("{$scheme}://{$host}" . Config::$paths->baseDir, '/');
 		Config::$paths->basePath = dirname(__DIR__);
+		Config::$paths->baseHref = Config::$paths->baseUrl . '/' . substr(Config::$paths->relativeUri, 0, strrpos('/' . Config::$paths->relativeUri, '/'));
 		
 		$defBehavior = Config::$behaviors->allowOriginalDownload[0];
 		if (!array_key_exists('gmi', Config::$behaviors->allowOriginalDownload)){
